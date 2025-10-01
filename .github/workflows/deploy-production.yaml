@@ -15,7 +15,7 @@ on:
 env:
   AWS_DEFAULT_REGION: us-east-2
   TERRAFORM_WORKING_DIR: ./eks-tf
-  DOCKER_IMAGE_NAME: fawkes-guy/prodxcloud-store # Tu usuario/nombre de imagen
+  DOCKER_IMAGE_NAME: cesardromero/prodxcloud-store # Tu usuario/nombre de imagen
 
 # --- JOBS ---
 # Secuencia de trabajos a ejecutar
