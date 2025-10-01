@@ -31,7 +31,7 @@ resource "aws_lb" "my_load_balancer" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = [aws_subnet.public-us-east-1a.id, aws_subnet.public-us-east-1b.id]
+  subnets            = [aws_subnet.public-us-east-2a.id, aws_subnet.public-us-east-2b.id]
 }
 
 # 3. Grupo de Destino para el ALB
