@@ -1,0 +1,19 @@
+# Ignorar dependencias locales, se instalarán dentro del contenedor
+node_modules
+
+# Ignorar el directorio de salida de build, se generará dentro del contenedor
+dist
+
+# Archivos de Git y de configuración del editor
+.git
+.vscode
+
+# Archivos de entorno local que pueden contener secretos
+.env*
+
+# Registros de npm
+npm-debug.log*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

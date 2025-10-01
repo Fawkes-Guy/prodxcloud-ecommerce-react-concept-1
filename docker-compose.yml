@@ -1,0 +1,16 @@
+services:
+  webapp:
+    # Un nombre de servicio más genérico
+    image: cesardromero/prodxcloud-store:latest # ¡IMPORTANTE! Usa tu usuario de Docker Hub
+    container_name: prodxcloud-store
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80" # Mapeo de puerto más seguro para desarrollo local
+    networks:
+      - web_network
+
+networks:
+  web_network:
+    driver: bridge
