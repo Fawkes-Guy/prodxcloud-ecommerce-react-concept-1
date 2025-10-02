@@ -1,30 +1,46 @@
 # Terraform EKS Cluster Project
 
-Este proyecto utiliza Terraform para desplegar un clúster de EKS en AWS.
+Este proyecto utiliza Terraform para desplegar un clúster de EKS en AWS y automatiza el despliegue de aplicaciones a través de GitHub Actions.
 
 ## Prerrequisitos
 
 * AWS CLI v2 (versión actualizada recomendada).
 * Terraform.
+* **GitHub CLI (gh)**.
 * Una cuenta de AWS con acceso a IAM Identity Center (SSO).
 
-## Autenticación en AWS (SSO)
+---
+## Actualización de Secretos para GitHub Actions
 
-Para que Terraform pueda interactuar con tu cuenta de AWS, necesita credenciales temporales. El siguiente método es la forma estándar y recomendada para iniciar una sesión de trabajo.
+El pipeline de CI/CD en GitHub Actions necesita credenciales temporales de AWS para ejecutarse. Como estas credenciales expiran, deben actualizarse manualmente antes de cada sesión de trabajo. El siguiente proceso utiliza el **GitHub CLI (`gh`)** para actualizar los secretos de forma segura y automatizada desde la terminal.
 
-Sigue esta secuencia cada vez que inicies una nueva sesión en la terminal:
+### Configuración Única (Primera Vez)
 
-1.  **Inicia sesión en AWS SSO:**
-    Este comando abrirá tu navegador para que te autentiques. Reemplaza `TuNombreDePerfil` con el nombre de tu perfil (ej: `CRomero`).
+1.  **Instalar GitHub CLI:** (Ejemplo para macOS con Homebrew)
+    ```bash
+    brew install gh
+    ```
+
+2.  **Autenticar GitHub CLI:**
+    Este comando abrirá tu navegador para que inicies sesión en tu cuenta de GitHub. Sigue los pasos interactivos.
+    ```bash
+    gh auth login
+    ```
+
+### Flujo de Trabajo para Actualizar Secretos
+
+Sigue esta secuencia cada vez que necesites ejecutar el pipeline de GitHub Actions.
+
+1.  **Navega a la Carpeta Raíz del Proyecto.**
+
+2.  **Inicia Sesión en AWS SSO:**
+    Reemplaza `TuNombreDePerfil` con el nombre de tu perfil (ej: `CRomero`).
     ```bash
     aws sso login --profile TuNombreDePerfil
     ```
 
-2.  **Exporta y Carga las Credenciales en el Entorno:**
-    Elige **uno** de los siguientes métodos. El **Método 1** es el más rápido y recomendado.
-
-    ### Método 1: Carga Automática (Formato `env`)
-    Este comando extrae las credenciales y las carga en tu sesión actual automáticamente. Es compatible con todas las versiones del AWS CLI v2.
+3.  **Carga las Credenciales en tu Terminal:**
+    Este comando carga las nuevas credenciales como variables de entorno en tu sesión actual.
     ```bash
     eval $(aws configure export-credentials --profile TuNombreDePerfil --format env)
     ```
@@ -32,41 +48,39 @@ Sigue esta secuencia cada vez que inicies una nueva sesión en la terminal:
     ```bash
     printenv | grep AWS
     ```
-
-    ### Método 2: Carga Manual (Formato `json`)
-    Este método es útil si necesitas ver o depurar las credenciales. Requiere una versión actualizada del AWS CLI.
-
-    **Paso 2.1: Exporta las credenciales a formato JSON.**
+    
+4.  **Envía las Credenciales a los Secretos de GitHub:**
+    Estos comandos toman las variables de tu terminal y las envían de forma segura a los secretos de tu entorno `production` en GitHub.
     ```bash
-    aws configure export-credentials --profile TuNombreDePerfil --format json
+    gh secret set AWS_ACCESS_KEY_ID --env production --body "$AWS_ACCESS_KEY_ID"
+    gh secret set AWS_SECRET_ACCESS_KEY --env production --body "$AWS_SECRET_ACCESS_KEY"
+    gh secret set AWS_SESSION_TOKEN --env production --body "$AWS_SESSION_TOKEN"
     ```
-    La salida será un objeto JSON. Copia los valores de `AccessKeyId`, `SecretAccessKey` y `SessionToken`.
+Después de completar estos pasos, puedes ir a la pestaña "Actions" de tu repositorio y ejecutar el workflow.
 
-    **Paso 2.2: Establece las variables de entorno manualmente.**
+---
+## Autenticación Local (Para Terraform)
+
+Si solo necesitas ejecutar comandos de Terraform en tu máquina local, sigue estos pasos.
+
+1.  **Inicia sesión en AWS SSO:**
+    Reemplaza `TuNombreDePerfil` con tu perfil (ej: `CRomero`).
     ```bash
-    export AWS_ACCESS_KEY_ID="VALOR_DE_AccessKeyId"
-    export AWS_SECRET_ACCESS_KEY="VALOR_DE_SecretAccessKey"
-    export AWS_SESSION_TOKEN="VALOR_DE_SessionToken"
-    ```
-
-## Uso de Terraform
-
-Una vez autenticado, puedes usar los comandos estándar de Terraform desde el directorio `eks-tf`.
-
-1.  **Inicializar el proyecto:**
-    ```bash
-    terraform init
+    aws sso login --profile TuNombreDePerfil
     ```
 
-2.  **Planificar los cambios:**
+2.  **Carga las Credenciales en el Entorno:**
     ```bash
-    terraform plan
+    eval $(aws configure export-credentials --profile TuNombreDePerfil --format env)
     ```
 
-3.  **Aplicar los cambios:**
-    ```bash
-    terraform apply
-    ```
+## Uso de Terraform (Local)
+
+Una vez autenticado localmente, puedes usar los comandos estándar de Terraform desde el directorio `eks-tf`.
+
+1.  **Inicializar:** `terraform init`
+2.  **Planificar:** `terraform plan`
+3.  **Aplicar:** `terraform apply`
 
 ---
 
@@ -74,8 +88,8 @@ Una vez autenticado, puedes usar los comandos estándar de Terraform desde el di
 
 #### Error: `InvalidClientTokenId` durante `terraform init`
 
-* **Síntoma:** `terraform init` falla con un error de autenticación a pesar de haber ejecutado `aws sso login` con éxito y de que comandos como `aws sts get-caller-identity` funcionan correctamente.
-
-* **Causa Raíz:** Se ha identificado una inconsistencia en cómo algunas versiones del proveedor de Terraform para AWS leen las credenciales del caché de SSO (`~/.aws/sso/cache`). El proveedor puede fallar en usar las credenciales que el AWS CLI sí puede leer y validar sin problemas.
-
-* **Solución:** La solución es no depender del mecanismo "automático" de Terraform para encontrar las credenciales. El flujo de trabajo descrito en la sección de **Autenticación en AWS (SSO)** resuelve este problema al forzar las credenciales en el entorno de la terminal, un método que Terraform siempre prioriza y entiende correctamente.
+* **Síntoma:** `terraform init` o el workflow de GitHub Actions fallan con un error de autenticación, incluso después de un `aws sso login` exitoso.
+* **Causa Raíz:** Las credenciales temporales de SSO han expirado. En el caso del workflow, también puede deberse a un error al copiar/pegar manualmente los secretos.
+* **Solución:** Sigue el flujo de trabajo correspondiente para actualizar las credenciales:
+    * Para ejecuciones locales, sigue la sección **"Autenticación Local"**.
+    * Para el pipeline de CI/CD, sigue la sección **"Actualización de Secretos para GitHub Actions"**.
