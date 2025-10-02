@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prodxcloud-store-svc # Nombre del servicio
+spec:
+  type: NodePort # Expone el servicio en un puerto estático en cada nodo del clúster
+  selector:
+    app: prodxcloud-store # Selecciona los pods con esta etiqueta (los de nuestro Deployment)
+  ports:
+    - protocol: TCP
+      port: 80 # El puerto por el que el servicio es accesible DENTRO del clúster
+      targetPort: 80 # El puerto al que se enviará el tráfico en los Pods (nuestro containerPort)

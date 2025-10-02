@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prodxcloud-store # El nombre de nuestro despliegue
+spec:
+  replicas: 2 # Ejecutaremos 2 copias de nuestra aplicación para redundancia
+  selector:
+    matchLabels:
+      app: prodxcloud-store # Este selector conecta el Deployment con los Pods
+  template:
+    metadata:
+      labels:
+        app: prodxcloud-store # Los Pods tendrán esta etiqueta
+    spec:
+      containers:
+      - name: prodxcloud-app
+        # ¡CAMBIO CLAVE! Usamos tu imagen de Docker Hub, no la del autor.
+        image: cesardromero/prodxcloud-store:latest
+        imagePullPolicy: Always # Siempre intenta descargar la última versión de la imagen
+        ports:
+        - containerPort: 80 # El puerto que expone Nginx dentro de nuestro contenedor

@@ -127,9 +127,6 @@ jobs:
 
       - name: Verify connection to cluster
         run: kubectl get pods
-        
-      # --- PASO FINAL FALTANTE ---
-      # Aquí es donde desplegarías tu aplicación.
-      # Necesitarás crear el archivo 'k8s/deployment.yaml' primero.
-      # - name: Deploy application to EKS
-      #   run: kubectl apply -f k8s/deployment.yaml
+      
+      - name: Deploy application to EKS
+        run: kubectl apply -f k8s/
