@@ -28,6 +28,10 @@ Sigue esta secuencia cada vez que inicies una nueva sesión en la terminal:
     ```bash
     eval $(aws configure export-credentials --profile TuNombreDePerfil --format env)
     ```
+    Para confirmar que las variables se establecieron, se puede ejecutar:
+    ```bash
+    printenv | grep AWS
+    ```
 
     ### Método 2: Carga Manual (Formato `json`)
     Este método es útil si necesitas ver o depurar las credenciales. Requiere una versión actualizada del AWS CLI.
